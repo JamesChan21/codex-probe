@@ -1,10 +1,28 @@
-# codex-probe
+```
+  ██████╗ ██████╗ ██████╗ ███████╗██╗  ██╗      ██████╗ ██████╗  ██████╗ ██████╗ ███████╗
+ ██╔════╝██╔═══██╗██╔══██╗██╔════╝╚██╗██╔╝      ██╔══██╗██╔══██╗██╔═══██╗██╔══██╗██╔════╝
+ ██║     ██║   ██║██║  ██║█████╗   ╚███╔╝ █████╗██████╔╝██████╔╝██║   ██║██████╔╝█████╗
+ ██║     ██║   ██║██║  ██║██╔══╝   ██╔██╗ ╚════╝██╔═══╝ ██╔══██╗██║   ██║██╔══██╗██╔══╝
+ ╚██████╗╚██████╔╝██████╔╝███████╗██╔╝ ██╗      ██║     ██║  ██║╚██████╔╝██████╔╝███████╗
+  ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝      ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝
+```
+
+<div align="center">
+
+**Codex Credential & Diagnostics CLI**
+
+[![Release](https://img.shields.io/github/v/release/yourname/codex-probe?style=flat-square)](../../releases)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)](https://go.dev)
+[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey?style=flat-square)]()
 
 [English](README.md) · [中文](README_ZH.md)
 
+</div>
+
 ---
 
-**Codex credential management & diagnostic CLI tool** — login, check quota, test models, export CSV. Works on Windows / Linux / macOS.
+Login · check quota · test models · export CSV — all in one binary. Works on Windows / Linux / macOS.
 
 ---
 
@@ -12,7 +30,7 @@
 
 **Pre-built binary (recommended)**
 
-Download the binary for your platform from [Releases](../../releases):
+Download from [Releases](../../releases):
 
 | Platform | File |
 |---|---|
@@ -35,34 +53,43 @@ go build -o codex-probe ./cmd/codex-probe/
 ## Quick Start
 
 ```bash
-# 1. Login and save credential
-codex-probe --login ./tokens/
+# Login and save credential
+codex-probe --login -o ./tokens/
 
-# 2. Check remaining quota
+# Check remaining quota
 codex-probe --status ./tokens/my.json
 
-# 3. Test all model endpoints
+# Test all model endpoints
 codex-probe --apitest ./tokens/
 
-# 4. Quota + apitest, export to CSV
+# Quota + apitest, export to CSV
 codex-probe --status --apitest --output result.csv ./tokens/
+
+# Use proxy
+codex-probe --proxy http://127.0.0.1:7890 --status ./tokens/my.json
 ```
 
 ---
 
 ## Options
 
-| Flag | Description |
-|---|---|
-| `--login` | OAuth PKCE flow, listen on `:1455`, write credential JSON |
-| `-o <path>` | Login: explicit output file or directory |
-| `--status` | Fetch usage quota (5h window + weekly window) |
-| `--apitest` | Send a minimal request to each model, report availability (`--test` is an alias) |
-| `--output <path.csv>` | Write results to CSV (requires `--status` or `--apitest`) |
-| `--proxy <url>` | Proxy URL (`http://…` or `socks5://…`). Pass `""` to force direct |
-| `--help` | Show help |
+```
+Usage:
+  codex-probe [options] <file-or-dir>
 
-**Last positional argument (required):**
+Options:
+  --login          OAuth PKCE login, listen on :1455, write credential JSON
+  -o       <path>  Output file or directory for --login (required with --login)
+  --status         Query remaining quota (5h window + weekly window)
+  --apitest        Test availability of every model endpoint (--test is an alias)
+  --output <path>  Write results to a CSV file (must end in .csv)
+  --proxy  <url>   Proxy URL  e.g. http://127.0.0.1:7890  or  socks5://...
+                   Pass "" to force direct connection
+                   Omit flag to auto-detect system proxy
+  --help           Show this help
+```
+
+**Positional argument (required for `--status` / `--apitest`):**
 
 | | Description |
 |---|---|
@@ -84,37 +111,40 @@ codex-probe --status --apitest --output result.csv ./tokens/
 
 ## Proxy Detection Order
 
-1. `--proxy <url>` flag
-2. `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` env vars
-3. macOS — `scutil --proxy`
-4. Windows — `HKCU\...\Internet Settings` registry
-5. Direct connection
+When `--proxy` is not specified, the following are tried in order:
+
+1. `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` environment variables
+2. macOS — `scutil --proxy`
+3. Windows — `HKCU\...\Internet Settings` registry
+4. Direct connection (fallback)
 
 ---
 
-## CSV Columns
+## CSV Output
 
 **`--status`**
-```
-file, account_id, email, plan_type,
-5h_used_pct, 5h_reset_at,
-weekly_used_pct, weekly_reset_at,
-upstream_status, error
-```
 
-**`--apitest`** (one row per token; `available` is true if at least one of **3 randomly sampled** models succeeds)
+| Column | Description |
+|---|---|
+| `file` | Credential file path |
+| `account_id` | Account ID |
+| `email` | Email |
+| `plan_type` | Plan type |
+| `5h_used_pct` | 5-hour window usage % |
+| `5h_reset_at` | 5-hour window reset time |
+| `weekly_used_pct` | Weekly window usage % |
+| `weekly_reset_at` | Weekly window reset time |
+| `upstream_status` | HTTP status code |
+| `error` | Error message if any |
 
-```
-file, account_id, sample_models, available
-```
+**`--apitest`** — one row per token
 
-`sample_models` lists the sampled model names, separated by `;`.
-
----
-
-## Region check
-
-Geo / region detection runs only when you actually run `--login`, `--status`, or `--apitest`. Showing `--help` does not trigger it.
+| Column | Description |
+|---|---|
+| `file` | Credential file path |
+| `account_id` | Account ID |
+| `sample_models` | 3 randomly sampled model names (`;`-separated) |
+| `available` | `true` if at least one sampled model responded successfully |
 
 ---
 

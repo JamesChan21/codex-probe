@@ -1,10 +1,28 @@
-# codex-probe
+```
+  ██████╗ ██████╗ ██████╗ ███████╗██╗  ██╗      ██████╗ ██████╗  ██████╗ ██████╗ ███████╗
+ ██╔════╝██╔═══██╗██╔══██╗██╔════╝╚██╗██╔╝      ██╔══██╗██╔══██╗██╔═══██╗██╔══██╗██╔════╝
+ ██║     ██║   ██║██║  ██║█████╗   ╚███╔╝ █████╗██████╔╝██████╔╝██║   ██║██████╔╝█████╗
+ ██║     ██║   ██║██║  ██║██╔══╝   ██╔██╗ ╚════╝██╔═══╝ ██╔══██╗██║   ██║██╔══██╗██╔══╝
+ ╚██████╗╚██████╔╝██████╔╝███████╗██╔╝ ██╗      ██║     ██║  ██║╚██████╔╝██████╔╝███████╗
+  ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝      ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝
+```
+
+<div align="center">
+
+**Codex 凭证管理与接口诊断命令行工具**
+
+[![Release](https://img.shields.io/github/v/release/yourname/codex-probe?style=flat-square)](../../releases)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?style=flat-square&logo=go)](https://go.dev)
+[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-lightgrey?style=flat-square)]()
 
 [English](README.md) · [中文](README_ZH.md)
 
+</div>
+
 ---
 
-**Codex 凭证管理与接口诊断命令行工具** — 一键登录、查看用量、测试模型、导出 CSV。支持 Windows / Linux / macOS。
+一键登录 · 查看用量 · 测试模型 · 导出 CSV，单二进制文件，支持 Windows / Linux / macOS。
 
 ---
 
@@ -12,7 +30,7 @@
 
 **直接下载（推荐）**
 
-从 [Releases](../../releases) 下载对应平台的二进制文件：
+从 [Releases](../../releases) 下载对应平台的文件：
 
 | 平台 | 文件名 |
 |---|---|
@@ -35,39 +53,47 @@ go build -o codex-probe ./cmd/codex-probe/
 ## 快速上手
 
 ```bash
-# 1. 登录并保存凭证
-codex-probe --login ./tokens/
+# 登录并保存凭证
+codex-probe --login -o ./tokens/
 
-# 2. 查看剩余用量
+# 查看剩余用量
 codex-probe --status ./tokens/my.json
 
-# 3. 测试所有模型接口
+# 测试所有模型接口
 codex-probe --apitest ./tokens/
 
-# 4. 用量 + apitest，同时导出 CSV
+# 用量 + 测试，同时导出 CSV
 codex-probe --status --apitest --output result.csv ./tokens/
+
+# 指定代理
+codex-probe --proxy http://127.0.0.1:7890 --status ./tokens/my.json
 ```
 
 ---
 
 ## 参数说明
 
-| 参数 | 说明 |
-|---|---|
-| `--login` | OAuth PKCE 登录，监听 `:1455` 回调，写入凭证 JSON |
-| `-o <path>` | 登录：显式指定输出文件或目录；填写时优先于位置参数，也可单独使用 |
-| `--status` | 查询剩余用量（5小时窗口 + 每周窗口）|
-| `--apitest` | 对每个模型发最小请求，终端展示可用性（`--test` 为别名） |
-| `--output <path.csv>` | 将结果写入 CSV（需配合 `--status` 或 `--apitest`）|
-| `--proxy <url>` | 指定代理（`http://…` 或 `socks5://…`）；传 `""` 强制直连 |
-| `--help` | 显示帮助 |
+```
+Usage:
+  codex-probe [options] <file-or-dir>
 
-**最后一个位置参数（必需）：**
+Options:
+  --login          OAuth PKCE 登录，监听 :1455 回调，写入凭证 JSON
+  -o       <path>  --login 的输出文件或目录（与 --login 一起使用时必填）
+  --status         查询剩余用量（5小时窗口 + 每周窗口）
+  --apitest        对每个模型发最小请求，报告可用性（--test 为别名）
+  --output <path>  将结果写入 CSV 文件（须以 .csv 结尾）
+  --proxy  <url>   代理地址，如 http://127.0.0.1:7890 或 socks5://...
+                   传 "" 强制直连，不传则自动检测系统代理
+  --help           显示帮助
+```
+
+**位置参数（`--status` / `--apitest` 必填）：**
 
 | | 说明 |
 |---|---|
 | `<file>` | 单个凭证 JSON 文件 |
-| `<dir>` | 目录 — 批量处理目录下所有 `*.json` |
+| `<dir>` | 目录 — 批量处理目录下所有 `*.json` 文件 |
 
 **凭证 JSON 格式：**
 
@@ -84,37 +110,40 @@ codex-probe --status --apitest --output result.csv ./tokens/
 
 ## 代理检测优先级
 
-1. `--proxy <url>` 命令行参数
-2. `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` 环境变量
-3. macOS — `scutil --proxy`（系统网络偏好设置）
-4. Windows — `HKCU\...\Internet Settings` 注册表
-5. 以上均未检测到则直连
+不指定 `--proxy` 时，按以下顺序自动检测：
+
+1. `HTTPS_PROXY` / `HTTP_PROXY` / `ALL_PROXY` 环境变量
+2. macOS — `scutil --proxy`（系统网络偏好设置）
+3. Windows — `HKCU\...\Internet Settings` 注册表
+4. 以上均未检测到则直连
 
 ---
 
 ## CSV 输出列
 
 **`--status`**
-```
-file, account_id, email, plan_type,
-5h_used_pct, 5h_reset_at,
-weekly_used_pct, weekly_reset_at,
-upstream_status, error
-```
 
-**`--apitest`**（每个 token 一行；从全部结果中**随机抽 3 个模型**，若其中**至少 1 个**可用则 `available` 为 true）
+| 列名 | 说明 |
+|---|---|
+| `file` | 凭证文件路径 |
+| `account_id` | 账号 ID |
+| `email` | 邮箱 |
+| `plan_type` | 套餐类型 |
+| `5h_used_pct` | 5小时窗口已用百分比 |
+| `5h_reset_at` | 5小时窗口重置时间 |
+| `weekly_used_pct` | 每周窗口已用百分比 |
+| `weekly_reset_at` | 每周窗口重置时间 |
+| `upstream_status` | HTTP 状态码 |
+| `error` | 错误信息（如有）|
 
-```
-file, account_id, sample_models, available
-```
+**`--apitest`** — 每个 token 一行
 
-`sample_models` 为被抽样的模型名，以 `;` 分隔。
-
----
-
-## 区域检测
-
-仅在会执行 `--login` / `--status` / `--apitest` 时才会做外网区域检测；仅打印帮助时不会发起检测。
+| 列名 | 说明 |
+|---|---|
+| `file` | 凭证文件路径 |
+| `account_id` | 账号 ID |
+| `sample_models` | 随机抽取的 3 个模型名（`;` 分隔）|
+| `available` | 至少 1 个模型响应成功则为 `true` |
 
 ---
 
