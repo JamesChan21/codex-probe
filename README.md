@@ -165,3 +165,10 @@ Expired tokens are refreshed automatically on 401/403.
 ## License
 
 MIT
+
+---
+
+## Credits
+
+- OAuth PKCE flow & model list referenced from [QuantumNous/new-api](https://github.com/QuantumNous/new-api)
+

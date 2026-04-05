@@ -164,3 +164,10 @@ Options:
 ## License
 
 MIT
+
+---
+
+## 致谢
+
+- OAuth PKCE 流程与模型列表参考自 [QuantumNous/new-api](https://github.com/QuantumNous/new-api)
+
