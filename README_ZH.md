@@ -178,3 +178,10 @@ MIT
 
 - OAuth PKCE 流程与模型列表参考自 [QuantumNous/new-api](https://github.com/QuantumNous/new-api)
 
+---
+
+## 友情链接
+
+[![LinuxDO](https://img.shields.io/badge/社区-Linux.do-blue?style=flat-square)](https://linux.do/)
+
+欢迎前往 [linux.do](https://linux.do/) 交流讨论。

@@ -179,3 +179,10 @@ MIT
 
 - OAuth PKCE flow & model list referenced from [QuantumNous/new-api](https://github.com/QuantumNous/new-api)
 
+---
+
+## Community
+
+[![LinuxDO](https://img.shields.io/badge/Community-Linux.do-blue?style=flat-square)](https://linux.do/)
+
+Discuss, share tips, and get help at [linux.do](https://linux.do/).
