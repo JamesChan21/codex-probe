@@ -155,11 +155,17 @@ func waitForCallback(ctx context.Context, expectedState string) (code string, st
 type tokenResult struct {
 	AccessToken  string
 	RefreshToken string
+	IDToken      string
+	Email        string
 	ExpiresAt    time.Time
 }
 
 // exchangeAuthCode exchanges an authorization code for tokens using PKCE verifier.
 func exchangeAuthCode(ctx context.Context, client *http.Client, code, verifier string) (*tokenResult, error) {
+	return exchangeAuthCodeWithURL(ctx, client, code, verifier, codexOAuthTokenURL)
+}
+
+func exchangeAuthCodeWithURL(ctx context.Context, client *http.Client, code, verifier, tokenURL string) (*tokenResult, error) {
 	form := url.Values{}
 	form.Set("grant_type", "authorization_code")
 	form.Set("client_id", codexOAuthClientID)
@@ -167,7 +173,7 @@ func exchangeAuthCode(ctx context.Context, client *http.Client, code, verifier s
 	form.Set("code_verifier", strings.TrimSpace(verifier))
 	form.Set("redirect_uri", codexOAuthRedirectURI)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, codexOAuthTokenURL, strings.NewReader(form.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -183,6 +189,7 @@ func exchangeAuthCode(ctx context.Context, client *http.Client, code, verifier s
 	var payload struct {
 		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
+		IDToken      string `json:"id_token"`
 		ExpiresIn    int    `json:"expires_in"`
 		Error        string `json:"error"`
 		ErrorDesc    string `json:"error_description"`
@@ -206,6 +213,8 @@ func exchangeAuthCode(ctx context.Context, client *http.Client, code, verifier s
 	return &tokenResult{
 		AccessToken:  strings.TrimSpace(payload.AccessToken),
 		RefreshToken: strings.TrimSpace(payload.RefreshToken),
+		IDToken:      strings.TrimSpace(payload.IDToken),
+		Email:        tokenEmail(payload.IDToken, payload.AccessToken),
 		ExpiresAt:    time.Now().Add(time.Duration(payload.ExpiresIn) * time.Second),
 	}, nil
 }
@@ -237,6 +246,7 @@ func refreshTokenWithURL(ctx context.Context, client *http.Client, refreshTokenS
 	var payload struct {
 		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
+		IDToken      string `json:"id_token"`
 		ExpiresIn    int    `json:"expires_in"`
 		Error        string `json:"error"`
 		ErrorDesc    string `json:"error_description"`
@@ -257,8 +267,27 @@ func refreshTokenWithURL(ctx context.Context, client *http.Client, refreshTokenS
 	return &tokenResult{
 		AccessToken:  strings.TrimSpace(payload.AccessToken),
 		RefreshToken: strings.TrimSpace(payload.RefreshToken),
+		IDToken:      strings.TrimSpace(payload.IDToken),
+		Email:        tokenEmail(payload.IDToken, payload.AccessToken),
 		ExpiresAt:    time.Now().Add(time.Duration(payload.ExpiresIn) * time.Second),
 	}, nil
+}
+
+func tokenAccountID(idToken, accessToken string) (string, bool) {
+	if accountID, ok := extractAccountIDFromJWT(idToken); ok {
+		return accountID, true
+	}
+	return extractAccountIDFromJWT(accessToken)
+}
+
+func tokenEmail(idToken, accessToken string) string {
+	if email, ok := extractEmailFromJWT(idToken); ok {
+		return email
+	}
+	if email, ok := extractEmailFromJWT(accessToken); ok {
+		return email
+	}
+	return ""
 }
 
 // --- JWT helpers (mirrors service/codex_oauth.go) ---

@@ -362,17 +362,17 @@ func runLogin(client *http.Client, cfg config, loginPathArg string, proxyURL str
 		fatalf("token exchange failed: %v", err)
 	}
 
-	accountID, ok := extractAccountIDFromJWT(tr.AccessToken)
+	accountID, ok := tokenAccountID(tr.IDToken, tr.AccessToken)
 	if !ok {
-		fatalf("could not extract account_id from access_token")
+		fatalf("could not extract account_id from id_token or access_token")
 	}
-	email, _ := extractEmailFromJWT(tr.AccessToken)
 
 	key := &OAuthKey{
+		IDToken:      tr.IDToken,
 		AccessToken:  tr.AccessToken,
 		RefreshToken: tr.RefreshToken,
 		AccountID:    accountID,
-		Email:        email,
+		Email:        tr.Email,
 		LastRefresh:  time.Now().Format(time.RFC3339),
 		Expired:      tr.ExpiresAt.Format(time.RFC3339),
 		Type:         "codex",
@@ -392,8 +392,8 @@ func runLogin(client *http.Client, cfg config, loginPathArg string, proxyURL str
 	fmt.Println()
 	infof(colorGreen("✓ Login successful! Credential saved to: %s"), outPath)
 	infof("  account_id : %s", accountID)
-	if email != "" {
-		infof("  email      : %s", email)
+	if tr.Email != "" {
+		infof("  email      : %s", tr.Email)
 	}
 	infof("  expires_at : %s", tr.ExpiresAt.Format(time.RFC3339))
 }

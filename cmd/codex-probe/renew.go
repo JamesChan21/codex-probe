@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
-	"io"
 )
 
 type RenewResult struct {
@@ -54,16 +54,17 @@ func renewKeyEntry(ctx context.Context, client *http.Client, entry keyEntry, tok
 
 	entry.key.AccessToken = refreshed.AccessToken
 	entry.key.RefreshToken = refreshed.RefreshToken
+	entry.key.IDToken = refreshed.IDToken
 	entry.key.LastRefresh = time.Now().Format(time.RFC3339)
 	entry.key.Expired = refreshed.ExpiresAt.Format(time.RFC3339)
 	if strings.TrimSpace(entry.key.Type) == "" {
 		entry.key.Type = "codex"
 	}
-	if accountID, ok := extractAccountIDFromJWT(entry.key.AccessToken); ok {
+	if accountID, ok := tokenAccountID(refreshed.IDToken, entry.key.AccessToken); ok {
 		entry.key.AccountID = accountID
 	}
-	if email, ok := extractEmailFromJWT(entry.key.AccessToken); ok {
-		entry.key.Email = email
+	if refreshed.Email != "" {
+		entry.key.Email = refreshed.Email
 	}
 
 	if err := saveKeyToFile(entry.path, entry.key); err != nil {
