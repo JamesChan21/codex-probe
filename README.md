@@ -63,6 +63,9 @@ go build -o codex-probe ./cmd/codex-probe/
 # Login and save credential
 codex-probe --login -o ./tokens/
 
+# Refresh credential JSON in place
+codex-probe --renew ./tokens/my.json
+
 # Check remaining quota
 codex-probe --status ./tokens/my.json
 
@@ -87,6 +90,7 @@ Usage:
 Options:
   --login          OAuth PKCE login, listen on :1455, write credential JSON
   -o       <path>  Output file or directory for --login (required with --login)
+  --renew          Refresh credential(s) with refresh_token and write back JSON
   --status         Query remaining quota (5h window + weekly window)
   --apitest        Test availability of every model endpoint (--test is an alias)
   --output <path>  Write results to a CSV file (must end in .csv)
@@ -96,7 +100,7 @@ Options:
   --help           Show this help
 ```
 
-**Positional argument (required for `--status` / `--apitest`):**
+**Positional argument (required for `--renew` / `--status` / `--apitest`):**
 
 | | Description |
 |---|---|
@@ -165,7 +169,7 @@ When `--proxy` is not specified, the following are tried in order:
 4. Exchanges `code + verifier` → `access_token + refresh_token`
 5. Decodes JWT to extract `account_id` and `email`
 
-Expired tokens are refreshed automatically on 401/403.
+Expired tokens are refreshed automatically on 401/403, and you can also force a refresh explicitly with `--renew`.
 
 ---
 

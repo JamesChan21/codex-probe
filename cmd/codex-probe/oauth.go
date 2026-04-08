@@ -212,12 +212,16 @@ func exchangeAuthCode(ctx context.Context, client *http.Client, code, verifier s
 
 // refreshToken uses a refresh_token to obtain a new access_token.
 func refreshToken(ctx context.Context, client *http.Client, refreshTokenStr string) (*tokenResult, error) {
+	return refreshTokenWithURL(ctx, client, refreshTokenStr, codexOAuthTokenURL)
+}
+
+func refreshTokenWithURL(ctx context.Context, client *http.Client, refreshTokenStr string, tokenURL string) (*tokenResult, error) {
 	form := url.Values{}
 	form.Set("grant_type", "refresh_token")
 	form.Set("refresh_token", strings.TrimSpace(refreshTokenStr))
 	form.Set("client_id", codexOAuthClientID)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, codexOAuthTokenURL, strings.NewReader(form.Encode()))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenURL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, err
 	}

@@ -32,6 +32,7 @@ Last positional argument (required):
 Options:
   --login          OAuth PKCE login, listen on :1455, write credential JSON
   -o       <path>  Output file or directory for --login (required with --login)
+  --renew          Refresh credential(s) with refresh_token and write back JSON
   --status         Query remaining quota (5h window + weekly window)
   --apitest        Test availability of every model endpoint
   --output <path>  Write --status / --apitest results to a CSV file (must end in .csv)
@@ -43,6 +44,7 @@ Options:
 Examples:
   codex-probe --login -o ./keys/my.json
   codex-probe --login -o ./keys/
+  codex-probe --renew ./keys/my.json
   codex-probe --status ./keys/my.json
   codex-probe --apitest --output apitest.csv ./keys/
   codex-probe --proxy http://127.0.0.1:7890 --status ./keys/my.json
@@ -51,6 +53,7 @@ Examples:
 
 type config struct {
 	doLogin      bool
+	doRenew      bool
 	doStatus     bool
 	doAPITest    bool
 	loginOutPath string
@@ -74,7 +77,7 @@ func main() {
 		fatalf("failed to initialize HTTP client: %v", err)
 	}
 
-	if !cfg.doLogin && !cfg.doStatus && !cfg.doAPITest {
+	if !cfg.doLogin && !cfg.doRenew && !cfg.doStatus && !cfg.doAPITest {
 		fmt.Print(helpText)
 		os.Exit(0)
 	}
@@ -111,11 +114,32 @@ func main() {
 
 	var usageRows []UsageResult
 	var apitestSummaries []APITestTokenSummary
+	var renewRows []RenewResult
 
 	for _, entry := range entries {
 		fmt.Println()
 		infof("processing: %s  (account_id: %s)", entry.path, entry.key.AccountID)
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+		if cfg.doRenew {
+			fmt.Println(colorCyan("  [renew]"))
+			renewedKey, err := renewKeyEntry(ctx, client, entry, codexOAuthTokenURL)
+			if err != nil {
+				errorf("  renew failed: %v", err)
+				renewRows = append(renewRows, RenewResult{
+					File:      entry.path,
+					AccountID: entry.key.AccountID,
+					Err:       err,
+				})
+			} else {
+				entry.key = renewedKey
+				infof("  credential renewed; expires at %s", renewedKey.Expired)
+				renewRows = append(renewRows, RenewResult{
+					File:      entry.path,
+					AccountID: entry.key.AccountID,
+				})
+			}
+		}
 
 		if cfg.doStatus {
 			fmt.Println(colorCyan("  [quota]"))
@@ -137,6 +161,9 @@ func main() {
 	// ---------- terminal summary ----------
 	fmt.Println()
 	fmt.Println(colorBold("══════════════════════ SUMMARY ══════════════════════"))
+	if cfg.doRenew {
+		writeRenewSummary(os.Stdout, renewRows)
+	}
 	if cfg.doStatus {
 		fmt.Println(colorCyan("  [quota summary]"))
 		fmt.Printf("  %-40s  %-8s  %s\n", "file", "HTTP", "status")
@@ -230,6 +257,8 @@ func parseArgs(args []string) config {
 			os.Exit(0)
 		case "--login":
 			cfg.doLogin = true
+		case "--renew":
+			cfg.doRenew = true
 		case "--status":
 			cfg.doStatus = true
 		case "--apitest", "--test":

@@ -63,6 +63,9 @@ go build -o codex-probe ./cmd/codex-probe/
 # 登录并保存凭证
 codex-probe --login -o ./tokens/
 
+# 就地续期凭证 JSON
+codex-probe --renew ./tokens/my.json
+
 # 查看剩余用量
 codex-probe --status ./tokens/my.json
 
@@ -87,6 +90,7 @@ Usage:
 Options:
   --login          OAuth PKCE 登录，监听 :1455 回调，写入凭证 JSON
   -o       <path>  --login 的输出文件或目录（与 --login 一起使用时必填）
+  --renew          用 refresh_token 刷新凭证并回写 JSON
   --status         查询剩余用量（5小时窗口 + 每周窗口）
   --apitest        对每个模型发最小请求，报告可用性（--test 为别名）
   --output <path>  将结果写入 CSV 文件（须以 .csv 结尾）
@@ -95,7 +99,7 @@ Options:
   --help           显示帮助
 ```
 
-**位置参数（`--status` / `--apitest` 必填）：**
+**位置参数（`--renew` / `--status` / `--apitest` 必填）：**
 
 | | 说明 |
 |---|---|
@@ -164,7 +168,7 @@ Options:
 4. 用 `code + verifier` 换取 `access_token + refresh_token`
 5. 解码 JWT 提取 `account_id` 和 `email`
 
-遇到 401/403 时自动用 `refresh_token` 续期。
+遇到 401/403 时会自动用 `refresh_token` 续期，也可以用 `--renew` 显式强制刷新。
 
 ---
 

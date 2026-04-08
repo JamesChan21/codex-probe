@@ -59,21 +59,10 @@ func fetchUsage(ctx context.Context, client *http.Client, entry keyEntry) UsageR
 		infof("  token expired (HTTP %d), refreshing...", statusCode)
 		refreshCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 		defer cancel()
-		tr, refreshErr := refreshToken(refreshCtx, client, entry.key.RefreshToken)
+		renewedKey, refreshErr := renewKeyEntry(refreshCtx, client, entry, codexOAuthTokenURL)
 		if refreshErr == nil {
-			entry.key.AccessToken = tr.AccessToken
-			entry.key.RefreshToken = tr.RefreshToken
-			entry.key.LastRefresh = time.Now().Format(time.RFC3339)
-			entry.key.Expired = tr.ExpiresAt.Format(time.RFC3339)
-			if entry.key.Type == "" {
-				entry.key.Type = "codex"
-			}
-			// persist updated key
-			if saveErr := saveKeyToFile(entry.path, entry.key); saveErr != nil {
-				warnf("  could not save refreshed token: %v", saveErr)
-			} else {
-				infof("  token refreshed and saved to %s", entry.path)
-			}
+			entry.key = renewedKey
+			infof("  token refreshed and saved to %s", entry.path)
 			statusCode, body, err = doFetchUsage(ctx, client, entry.key.AccessToken, entry.key.AccountID)
 			if err != nil {
 				res.Err = err
