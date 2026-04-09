@@ -1,9 +1,6 @@
-          ██████╗ ██████╗ ██████╗ ███████╗██╗  ██╗      ██████╗ ██████╗  ██████╗ ██████╗ ███████╗
-         ██╔════╝██╔═══██╗██╔══██╗██╔════╝╚██╗██╔╝      ██╔══██╗██╔══██╗██╔═══██╗██╔══██╗██╔════╝
-         ██║     ██║   ██║██║  ██║█████╗   ╚███╔╝ █████╗██████╔╝██████╔╝██║   ██║██████╔╝█████╗
-         ██║     ██║   ██║██║  ██║██╔══╝   ██╔██╗ ╚════╝██╔═══╝ ██╔══██╗██║   ██║██╔══██╗██╔══╝
-         ╚██████╗╚██████╔╝██████╔╝███████╗██╔╝ ██╗      ██║     ██║  ██║╚██████╔╝██████╔╝███████╗
-          ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝      ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝
+<p align="center">
+  <img width="256" height="256" alt="Gemini_Generated_Image_6p04mm6p04mm6p04" src="https://github.com/user-attachments/assets/512cd1d8-93af-40dc-acde-6e7daa339493" />
+</p>
 
 <div align="center">
 
@@ -22,7 +19,9 @@
 
 ## Project Overview
 
-<!-- Screenshot goes here -->
+<p align="center">
+  <img width="80%" alt="logo" src="https://github.com/user-attachments/assets/9bd3c05b-5274-4bb3-b504-c18a52891181" />
+</p>
 
 `codex-probe` turns the raw CLI flags into a small credential workflow you can actually operate day to day.
 
